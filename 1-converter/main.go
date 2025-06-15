@@ -9,6 +9,10 @@ import (
 	"strings"
 )
 
+const USDtoEUR float64 = 0.88
+const USDtoRUB float64 = 79.0
+const EURtoRUB float64 = USDtoRUB / USDtoEUR
+
 func main() {
 	fmt.Println("__Добро пожаловать в валютный калькулятор__")
 	for {
@@ -72,9 +76,6 @@ func getUserData() (float64, string, string, error) {
 	return sum, currencyFrom, currencyTo, nil
 }
 func convert(sum float64, currencyFrom string, currencyTo string) float64 {
-	const USDtoEUR float64 = 0.88
-	const USDtoRUB float64 = 79.0
-	const EURtoRUB float64 = USDtoRUB / USDtoEUR
 
 	switch {
 	case currencyFrom == "USD" && currencyTo == "EUR":
