@@ -35,7 +35,7 @@ func main() {
 		sum := slice.ReduceBy(numbers, 0, func(_, cur, acc int) int {
 			return acc + cur
 		})
-		result = float64(sum / len(numbers))
+		result = float64(sum) / float64(len(numbers))
 	case "SUM":
 		result = float64(slice.ReduceBy(numbers, 0, func(_, cur, acc int) int {
 			return acc + cur
