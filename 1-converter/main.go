@@ -9,9 +9,17 @@ import (
 	"strings"
 )
 
+type currencyMap map[string]map[string]float64
+
 const USDtoEUR float64 = 0.88
 const USDtoRUB float64 = 79.0
 const EURtoRUB float64 = USDtoRUB / USDtoEUR
+
+var CURRENCY_MAP = currencyMap{
+	"USD": {"EUR": USDtoEUR, "RUB": USDtoRUB},
+	"EUR": {"RUB": EURtoRUB, "USD": 1 / USDtoEUR},
+	"RUB": {"EUR": 1 / EURtoRUB, "USD": 1 / USDtoRUB},
+}
 
 func main() {
 	fmt.Println("__Добро пожаловать в валютный калькулятор__")
@@ -23,7 +31,7 @@ func main() {
 			continue
 		}
 
-		result := convert(sum, currencyFrom, currencyTo)
+		result := convert(sum, currencyFrom, currencyTo, &CURRENCY_MAP)
 		fmt.Printf("%.2f %s = %.2f %s\n", sum, currencyFrom, result, currencyTo)
 
 		fmt.Println("Хотите продолжить работу с калькулятором? (y/n)")
@@ -75,23 +83,6 @@ func getUserData() (float64, string, string, error) {
 
 	return sum, currencyFrom, currencyTo, nil
 }
-func convert(sum float64, currencyFrom string, currencyTo string) float64 {
-
-	switch {
-	case currencyFrom == "USD" && currencyTo == "EUR":
-		return sum * USDtoEUR
-	case currencyFrom == "USD" && currencyTo == "RUB":
-		return sum * USDtoRUB
-	case currencyFrom == "EUR" && currencyTo == "USD":
-		return sum / USDtoEUR
-	case currencyFrom == "EUR" && currencyTo == "RUB":
-		return sum * EURtoRUB
-	case currencyFrom == "RUB" && currencyTo == "USD":
-		return sum / USDtoRUB
-	case currencyFrom == "RUB" && currencyTo == "EUR":
-		return sum / EURtoRUB
-	default:
-		fmt.Println("Введены некорректные данные")
-		return 0
-	}
+func convert(sum float64, currencyFrom string, currencyTo string, mapPointer *currencyMap) float64 {
+	return sum * (*mapPointer)[currencyFrom][currencyTo]
 }
