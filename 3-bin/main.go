@@ -18,7 +18,9 @@ type BinList struct {
 
 func main() {
 	bin := newBin()
+	binList := newBinList()
 	fmt.Println(bin)
+	fmt.Println(binList)
 }
 
 func newBin() Bin {
@@ -27,5 +29,11 @@ func newBin() Bin {
 		private:   false,
 		createdAt: time.Now(),
 		name:      "",
+	}
+}
+
+func newBinList() BinList {
+	return BinList{
+		bins: []Bin{},
 	}
 }
