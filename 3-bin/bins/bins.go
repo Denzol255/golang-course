@@ -3,27 +3,27 @@ package bins
 import "time"
 
 type Bin struct {
-	id        string
-	private   bool
-	createdAt time.Time
-	name      string
+	Id        string
+	Private   bool
+	CreatedAt time.Time
+	Name      string
 }
 
 type BinList struct {
-	bins []Bin
+	Bins []Bin
 }
 
 func NewBin() Bin {
 	return Bin{
-		id:        "",
-		private:   false,
-		createdAt: time.Now(),
-		name:      "",
+		Id:        "",
+		Private:   false,
+		CreatedAt: time.Now(),
+		Name:      "",
 	}
 }
 
 func NewBinList() BinList {
 	return BinList{
-		bins: []Bin{},
+		Bins: []Bin{},
 	}
 }
