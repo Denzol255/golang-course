@@ -1,88 +1,104 @@
 package main
 
 import (
-	"errors"
+	"app/password/account"
 	"fmt"
-	"math/rand"
-	"net/url"
-	"time"
+
+	"github.com/fatih/color"
 )
 
-type account struct {
-	login    string
-	password string
-	url      string
-}
-
-type accountWithTimeStamp struct {
-	account
-	createdAt time.Time
-	updatedAt time.Time
-}
-
-func (acc *accountWithTimeStamp) getInfo() {
-	fmt.Println("Информация о аккаунте:")
-	fmt.Println("Логин:", acc.login)
-	fmt.Println("Пароль:", acc.password)
-	fmt.Println("URL:", acc.url)
-	fmt.Println("Дата создания:", acc.createdAt.Format(time.RFC3339))
-	fmt.Println("Дата обновления:", acc.updatedAt.Format(time.RFC3339))
-}
-
-func (acc *account) generatePassword(length int) {
-	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?"
-	var password string
-	for range length {
-		password += string(charset[rand.Intn(len(charset))])
-	}
-	acc.password = password
-}
-
-func newAccountWithTimeStamp(login, password, urlValue string) (*accountWithTimeStamp, error) {
-	// Валидация логина
-	if login == "" {
-		return nil, errors.New("логин не может быть пустым")
-	}
-	// Валидация url
-	_, err := url.ParseRequestURI(urlValue)
-	if err != nil {
-		return nil, err
-	}
-
-	newAcc := &accountWithTimeStamp{
-		account: account{login: login,
-			password: password,
-			url:      urlValue},
-		createdAt: time.Now(),
-		updatedAt: time.Now(),
-	}
-
-	if newAcc.password == "" {
-		newAcc.generatePassword(10)
-	}
-
-	return newAcc, nil
-}
-
 func main() {
+	color.Green(`
+		Добро пожаловать в программу для хранения паролей!
+		Выберите действие:
+	`)
+	vault := account.NewVault()
+Menu:
+	for {
+		switch getUserChoice() {
+		case 1:
+			createAccount(vault)
+		case 2:
+			findAccount(vault)
+		case 3:
+			deleteAccount(vault)
+		default:
+			break Menu
+		}
+	}
+}
+
+func createAccount(vault *account.Vault) {
 	login := getPromptData("Введите логин: ")
 	password := getPromptData("Введите пароль: ")
 	url := getPromptData("Введите url: ")
 
-	account, err := newAccountWithTimeStamp(login, password, url)
+	myAccount, err := account.NewAccount(login, password, url)
 	if err != nil {
-		fmt.Println(err)
+		color.Red(err.Error())
 		return
 	}
 
-	account.getInfo()
+	vault.AddAccount(*myAccount)
+
+}
+
+func findAccount(vault *account.Vault) {
+	url := getPromptData("Введите url: ")
+	if len(url) == 0 {
+		color.Red("URL не может быть пустым")
+	} else {
+		result := vault.FindAccountsByUrl(url)
+		fmt.Println()
+		if len(result) == 0 {
+			color.Red("Не найдено ни одного аккаунта")
+		} else {
+			if len(result) > 1 {
+				color.Yellow("Найдено %d аккаунтов", len(result))
+			} else {
+				color.Yellow("Найден 1 аккаунт")
+			}
+			for index, value := range result {
+				fmt.Println()
+				color.Green("%d. Данные аккаунта", index+1)
+				value.GetInfo()
+				fmt.Println()
+			}
+		}
+		fmt.Println()
+	}
+}
+
+func deleteAccount(vault *account.Vault) {
+	url := getPromptData("Введите url: ")
+	if len(url) == 0 {
+		color.Red("URL не может быть пустым")
+	} else {
+		found := vault.DeleteAccountByUrl(url)
+		if found {
+			color.Green("Аккаунт успешно удален")
+		} else {
+			color.Red("Не найдено ни одного аккаунта")
+		}
+	}
 }
 
 func getPromptData(prompt string) string {
 	var value string
-	fmt.Print(prompt)
+	color.Green(prompt)
 	fmt.Scanln(&value)
 	return value
+}
+
+func getUserChoice() int {
+	var choice int
+	color.Green("Выберите действие: ")
+	color.Green("1. Создать аккаунт")
+	color.Blue("2. Найти аккаунт")
+	color.Yellow("3. Удалить аккаунт")
+	color.White("4. Выход")
+	fmt.Scanln(&choice)
+	return choice
 }
 
 func reverse(pointer *[5]int) {
