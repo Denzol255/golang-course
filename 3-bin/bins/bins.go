@@ -1,29 +1,30 @@
 package bins
 
-import "time"
+import (
+	"time"
+)
 
 type Bin struct {
-	Id        string
-	Private   bool
-	CreatedAt time.Time
-	Name      string
+	Id        string    `json:"id"`
+	Private   bool      `json:"private"`
+	CreatedAt time.Time `json:"created_at"`
+	Name      string    `json:"name"`
 }
 
 type BinList struct {
-	Bins []Bin
+	Bins      []Bin     `json:"bins"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func NewBin() Bin {
-	return Bin{
-		Id:        "",
-		Private:   false,
+func NewBin(name, id string, private bool) *Bin {
+	return &Bin{
+		Id:        id,
+		Private:   private,
 		CreatedAt: time.Now(),
-		Name:      "",
+		Name:      name,
 	}
 }
 
-func NewBinList() BinList {
-	return BinList{
-		Bins: []Bin{},
-	}
+func (binList *BinList) AddBin(bin Bin) {
+	binList.Bins = append(binList.Bins, bin)
 }
