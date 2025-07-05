@@ -1,16 +1,12 @@
 package file
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strings"
 )
 
 func ReadFile(fileName string) ([]byte, error) {
-	if !strings.HasSuffix(fileName, ".json") {
-		return nil, errors.New("Неверный формат файла!")
-	}
 	data, err := os.ReadFile(fileName)
 	if err != nil {
 		fmt.Println(err)
@@ -33,4 +29,8 @@ func WriteFile(content []byte, fileName string) {
 	}
 	fmt.Println("Запись в файл успешно завершена!")
 	file.Close()
+}
+
+func CheckForJSON(fileName string) bool {
+	return strings.HasSuffix(fileName, ".json")
 }
