@@ -1,21 +1,29 @@
 package account
 
 import (
-	"app/password/files"
 	"encoding/json"
 	"slices"
-	"strings"
 	"time"
 
 	"github.com/fatih/color"
 )
+
+type Db interface {
+	Read() ([]byte, error)
+	Write(data []byte)
+}
 
 type Vault struct {
 	Accounts  []Account `json:"accounts"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func (vault *Vault) DeleteAccountByUrl(url string) bool {
+type VaultWithDB struct {
+	Vault
+	db Db
+}
+
+func (vault *VaultWithDB) DeleteAccountByUrl(url string) bool {
 	accountIdx := slices.IndexFunc(vault.Accounts, func(account Account) bool {
 		return account.Url == url
 	})
@@ -26,10 +34,10 @@ func (vault *Vault) DeleteAccountByUrl(url string) bool {
 	return accountIdx != -1
 }
 
-func (vault *Vault) FindAccountsByUrl(url string) []Account {
+func (vault *VaultWithDB) FindAccounts(checkerFunc func(account Account) bool) []Account {
 	result := make([]Account, 0)
 	for _, value := range vault.Accounts {
-		if strings.Contains(value.Url, url) {
+		if checkerFunc(value) {
 			result = append(result, value)
 		}
 	}
@@ -37,33 +45,46 @@ func (vault *Vault) FindAccountsByUrl(url string) []Account {
 	return result
 }
 
-func NewVault() *Vault {
-	file, err := files.ReadFromFile("data.json")
+func NewVault(db Db) *VaultWithDB {
+	file, err := db.Read()
 	if err != nil {
-		return &Vault{
-			Accounts:  make([]Account, 0),
-			UpdatedAt: time.Now(),
+		return &VaultWithDB{
+			Vault: Vault{
+				Accounts:  make([]Account, 0),
+				UpdatedAt: time.Now(),
+			},
+			db: db,
 		}
 	}
 	var vault Vault
 	err = json.Unmarshal(file, &vault)
 	if err != nil {
 		color.Red(err.Error())
+		return &VaultWithDB{
+			Vault: Vault{
+				Accounts:  make([]Account, 0),
+				UpdatedAt: time.Now(),
+			},
+			db: db,
+		}
 	}
-	return &vault
+	return &VaultWithDB{
+		Vault: vault,
+		db:    db,
+	}
 }
 
-func (vault *Vault) AddAccount(account Account) {
+func (vault *VaultWithDB) AddAccount(account Account) {
 	vault.Accounts = append(vault.Accounts, account)
 	vault.save()
 }
 
-func (vault *Vault) save() {
-	data, err := json.Marshal(vault)
+func (vault *VaultWithDB) save() {
+	data, err := json.Marshal(vault.Vault)
 	if err != nil {
 		color.Red(err.Error())
 		return
 	}
-	files.WriteIntoFile(data, "data.json")
+	vault.db.Write(data)
 	vault.UpdatedAt = time.Now()
 }
