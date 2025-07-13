@@ -10,6 +10,11 @@ import (
 	"github.com/fatih/color"
 )
 
+type Storage interface {
+	Save(bins.BinList)
+	Get(string) (bins.BinList, error)
+}
+
 func SaveBins(binList *bins.BinList) {
 	data, err := json.Marshal(binList)
 	if err != nil {
