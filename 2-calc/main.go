@@ -5,9 +5,13 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-
-	"github.com/duke-git/lancet/v2/slice"
 )
+
+var operations = map[string]func([]int) float64{
+	"SUM": calculateSum,
+	"AVG": calculateAvg,
+	"MED": calculateMed,
+}
 
 func main() {
 	fmt.Println("Добро пожаловать в калькулятор!")
@@ -20,6 +24,7 @@ func main() {
 
 	stringNumbers := strings.Split(input, ",")
 	numbers := make([]int, len(stringNumbers))
+
 	for index, value := range stringNumbers {
 		num, err := strconv.Atoi(value)
 		if err == nil {
@@ -29,28 +34,30 @@ func main() {
 			return
 		}
 	}
-	var result float64
-	switch operation {
-	case "AVG":
-		sum := slice.ReduceBy(numbers, 0, func(_, cur, acc int) int {
-			return acc + cur
-		})
-		result = float64(sum) / float64(len(numbers))
-	case "SUM":
-		result = float64(slice.ReduceBy(numbers, 0, func(_, cur, acc int) int {
-			return acc + cur
-		}))
-	case "MED":
-		sort.Ints(numbers)
-		if len(numbers)%2 == 0 {
-			result = (float64(numbers[len(numbers)/2]) + float64(numbers[len(numbers)/2-1])) / 2.0
-		} else {
-			result = float64(numbers[(len(numbers)-1)/2])
-		}
-	default:
-		fmt.Println("Некорректная операция")
+
+	if operationFunc, ok := operations[operation]; ok {
+		fmt.Printf("Результат: %.2f\n", operationFunc(numbers))
 		return
 	}
+	fmt.Println("Некорректная операция")
+}
 
-	fmt.Printf("Результат: %.2f\n", result)
+func calculateSum(numbers []int) float64 {
+	sum := 0
+	for _, value := range numbers {
+		sum += value
+	}
+	return float64(sum)
+}
+
+func calculateAvg(numbers []int) float64 {
+	return calculateSum(numbers) / float64(len(numbers))
+}
+
+func calculateMed(numbers []int) float64 {
+	sort.Ints(numbers)
+	if len(numbers)%2 == 0 {
+		return (float64(numbers[len(numbers)/2]) + float64(numbers[len(numbers)/2-1])) / 2.0
+	}
+	return float64(numbers[(len(numbers)-1)/2])
 }
