@@ -1,6 +1,7 @@
 package account
 
 import (
+	"app/password/encrypter"
 	"encoding/json"
 	"slices"
 	"time"
@@ -20,7 +21,8 @@ type Vault struct {
 
 type VaultWithDB struct {
 	Vault
-	db Db
+	db  Db
+	enc encrypter.Encrypter
 }
 
 func (vault *VaultWithDB) DeleteAccountByUrl(url string) bool {
@@ -45,7 +47,7 @@ func (vault *VaultWithDB) FindAccounts(checkerFunc func(account Account) bool) [
 	return result
 }
 
-func NewVault(db Db) *VaultWithDB {
+func NewVault(db Db, enc encrypter.Encrypter) *VaultWithDB {
 	file, err := db.Read()
 	if err != nil {
 		return &VaultWithDB{
@@ -53,11 +55,14 @@ func NewVault(db Db) *VaultWithDB {
 				Accounts:  make([]Account, 0),
 				UpdatedAt: time.Now(),
 			},
-			db: db,
+			db:  db,
+			enc: enc,
 		}
 	}
 	var vault Vault
-	err = json.Unmarshal(file, &vault)
+	data := enc.Decrypt(file)
+	err = json.Unmarshal(data, &vault)
+	color.Cyan("Найдено %d аккаунтов", len(vault.Accounts))
 	if err != nil {
 		color.Red(err.Error())
 		return &VaultWithDB{
@@ -71,6 +76,7 @@ func NewVault(db Db) *VaultWithDB {
 	return &VaultWithDB{
 		Vault: vault,
 		db:    db,
+		enc:   enc,
 	}
 }
 
@@ -85,6 +91,7 @@ func (vault *VaultWithDB) save() {
 		color.Red(err.Error())
 		return
 	}
-	vault.db.Write(data)
+	encryptedData := vault.enc.Encrypt(data)
+	vault.db.Write(encryptedData)
 	vault.UpdatedAt = time.Now()
 }

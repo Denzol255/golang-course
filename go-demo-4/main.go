@@ -2,11 +2,13 @@ package main
 
 import (
 	"app/password/account"
+	"app/password/encrypter"
 	"app/password/files"
 	"fmt"
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/joho/godotenv"
 )
 
 var menu = map[string]func(*account.VaultWithDB){
@@ -17,11 +19,15 @@ var menu = map[string]func(*account.VaultWithDB){
 }
 
 func main() {
+	err := godotenv.Load(".env")
+	if err != nil {
+		color.Red("Не удалось загрузить файл .env")
+	}
 	color.Green(`
 		Добро пожаловать в программу для хранения паролей!
 		Выберите действие:
 	`)
-	vaultWithDB := account.NewVault(files.NewJsonDb("data.json"))
+	vaultWithDB := account.NewVault(files.NewJsonDb("data.vault"), *encrypter.NewEncrypter())
 Menu:
 	for {
 		variant := getPromptData(

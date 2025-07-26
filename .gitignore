@@ -1,2 +1,4 @@
 data.json
 storage.json
+.env*
+*.vault
