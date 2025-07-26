@@ -22,7 +22,7 @@ func SaveBins(binList *bins.BinList) {
 
 func GetBins(fileName string) (*bins.BinList, error) {
 	if !file.CheckForJSON(fileName) {
-		return nil, errors.New("Файл не является JSON файлом")
+		return nil, errors.New("NOT_JSON_FILE")
 	}
 	data, err := file.ReadFile("storage.json")
 	if err != nil {
