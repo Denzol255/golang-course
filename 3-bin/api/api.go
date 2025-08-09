@@ -11,14 +11,7 @@ import (
 	"net/url"
 )
 
-func CreateBin(config *config.Config, name, fileName *string) (*bins.Bin, error) {
-	// TODO: вынести в bins, передавать готовую binData
-	binData, err := bins.GetBinDataFromFile(fileName)
-
-	if err != nil {
-		return nil, err
-	}
-
+func CreateBin(config *config.Config, name *string, binData *bins.RecordData) (*bins.Bin, error) {
 	body, _ := json.Marshal(map[string]string{
 		"text": binData.Text,
 	})
@@ -36,6 +29,11 @@ func CreateBin(config *config.Config, name, fileName *string) (*bins.Bin, error)
 		return nil, err
 	}
 	defer response.Body.Close()
+
+	if response.StatusCode != 200 {
+		return nil, errors.New("ERROR_WHILE_CREATE_BIN")
+	}
+
 	responseBody, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
@@ -46,22 +44,46 @@ func CreateBin(config *config.Config, name, fileName *string) (*bins.Bin, error)
 	return bins.NewBin(result.Metadata.Name, result.Metadata.Id, result.Metadata.Private, result.Record), nil
 }
 
-func GetBin(config config.Config, id string) {
+func GetBin(config *config.Config, id *string) (*bins.RecordData, error) {
+	client := &http.Client{}
 
-}
-
-func UpdateBin(config *config.Config, id, fileName *string) (*string, *bins.RecordData, error) {
-	// TODO: вынести в bins, передавать готовую binData
-	binData, err := bins.GetBinDataFromFile(fileName)
+	baseUrl, err := url.Parse(config.PrimaryUrl + "/" + *id)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
+	request, err := http.NewRequest("GET", baseUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	request.Header.Add("Content-Type", "application/json")
+	request.Header.Add("X-Master-Key", config.Key)
+	response, err := client.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != 200 {
+		return nil, errors.New("ERROR_WHILE_GET_BIN")
+	}
+
+	responseBody, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	var result bins.JSONBinResponse
+	json.Unmarshal(responseBody, &result)
+
+	return &result.Record, nil
+}
+
+func UpdateBin(config *config.Config, id *string, binData *bins.RecordData) (*string, *bins.RecordData, error) {
 	body, _ := json.Marshal(map[string]string{
 		"text": binData.Text,
 	})
 	client := &http.Client{}
-	baseUrl, err := url.Parse(config.PrimaryUrl + *id)
+	baseUrl, err := url.Parse(config.PrimaryUrl + "/" + *id)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -86,6 +108,34 @@ func UpdateBin(config *config.Config, id, fileName *string) (*string, *bins.Reco
 	return id, binData, nil
 }
 
-func DeleteBin(config config.Config, id string) {
+func DeleteBin(config *config.Config, id *string) (string, error) {
+	client := &http.Client{}
 
+	baseUrl, err := url.Parse(config.PrimaryUrl + "/" + *id)
+	if err != nil {
+		return "", err
+	}
+
+	request, err := http.NewRequest("DELETE", baseUrl.String(), nil)
+	if err != nil {
+		return "", err
+	}
+	request.Header.Add("Content-Type", "application/json")
+	request.Header.Add("X-Master-Key", config.Key)
+	response, err := client.Do(request)
+	if err != nil {
+		return "", err
+	}
+	defer response.Body.Close()
+	if response.StatusCode != 200 {
+		return "", errors.New("ERROR_WHILE_DELETE_BIN")
+	}
+
+	responseBody, err := io.ReadAll(response.Body)
+	if err != nil {
+		return "", err
+	}
+	var result bins.JSONBinDeleteResponse
+	json.Unmarshal(responseBody, &result)
+	return result.Message, nil
 }

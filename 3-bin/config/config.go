@@ -16,6 +16,6 @@ func NewConfig() *Config {
 	}
 	return &Config{
 		Key:        key,
-		PrimaryUrl: "https://api.jsonbin.io/v3/b/",
+		PrimaryUrl: "https://api.jsonbin.io/v3/b",
 	}
 }

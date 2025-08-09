@@ -2,6 +2,7 @@ package main
 
 import (
 	"app/bin/api"
+	"app/bin/bins"
 	"app/bin/config"
 	"app/bin/storage"
 	"flag"
@@ -27,13 +28,18 @@ func main() {
 	binName := flag.String("name", "test", "Bin name")
 	binId := flag.String("id", "", "Bin id")
 
-	fmt.Println(*isGet, *isList, *isUpdate, *isDelete, *binId)
-
 	flag.Parse()
 
 	if *isCreate {
 		if len(*fileName) != 0 && len(*binName) != 0 {
-			newBin, err := api.CreateBin(config, binName, fileName)
+			binData, err := bins.GetBinDataFromFile(fileName)
+
+			if err != nil {
+				color.Red(err.Error())
+				return
+			}
+
+			newBin, err := api.CreateBin(config, binName, binData)
 			if err != nil {
 				color.Red(err.Error())
 				return
@@ -45,12 +51,20 @@ func main() {
 			}
 			binList.AddBin(newBin)
 			binList.SaveBins("storage.json")
+			color.Green("Bin successfully created")
 		}
 	}
 
 	if *isUpdate {
 		if len(*fileName) != 0 && len(*binId) != 0 {
-			id, newData, err := api.UpdateBin(config, binId, fileName)
+			binData, err := bins.GetBinDataFromFile(fileName)
+
+			if err != nil {
+				color.Red(err.Error())
+				return
+			}
+
+			id, newData, err := api.UpdateBin(config, binId, binData)
 			if err != nil {
 				color.Red(err.Error())
 				return
@@ -62,6 +76,48 @@ func main() {
 			}
 			binList.UpdateBinById(id, newData)
 			binList.SaveBins("storage.json")
+			color.Green("Bin successfully updated")
 		}
+	}
+
+	if *isGet {
+		if len(*binId) != 0 {
+			binRecord, err := api.GetBin(config, binId)
+			if err != nil {
+				color.Red(err.Error())
+				return
+			}
+			fmt.Println()
+			color.Blue(binRecord.Text)
+		}
+	}
+
+	if *isDelete {
+		if len(*binId) != 0 {
+			message, err := api.DeleteBin(config, binId)
+			if err != nil {
+				color.Red(err.Error())
+				return
+			}
+
+			binList, err := storage.GetBinList("storage.json")
+			if err != nil {
+				color.Red(err.Error())
+				return
+			}
+			binList.DeleteBinById(binId)
+			binList.SaveBins("storage.json")
+
+			color.Green(message)
+		}
+	}
+
+	if *isList {
+		binList, err := storage.GetBinList("storage.json")
+		if err != nil {
+			color.Red(err.Error())
+			return
+		}
+		binList.DisplayBins()
 	}
 }

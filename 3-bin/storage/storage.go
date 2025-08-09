@@ -5,6 +5,7 @@ import (
 	"app/bin/file"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"slices"
 	"time"
 
@@ -14,6 +15,23 @@ import (
 type BinList struct {
 	Bins      []bins.Bin `json:"bins"`
 	UpdatedAt time.Time  `json:"updated_at"`
+}
+
+func (binList *BinList) DisplayBins() {
+	color.Green("Bins:")
+	fmt.Println()
+	for _, bin := range binList.Bins {
+		bin.DisplayBin()
+	}
+}
+
+func (binList *BinList) DeleteBinById(id *string) {
+	binIdx := slices.IndexFunc(binList.Bins, func(bin bins.Bin) bool {
+		return bin.Id == *id
+	})
+	if binIdx != -1 {
+		binList.Bins = append(binList.Bins[:binIdx], binList.Bins[binIdx+1:]...)
+	}
 }
 
 func (binList *BinList) UpdateBinById(id *string, newData *bins.RecordData) {
