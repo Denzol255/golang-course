@@ -5,7 +5,8 @@ import (
 )
 
 type Config struct {
-	Key string
+	Key        string
+	PrimaryUrl string
 }
 
 func NewConfig() *Config {
@@ -14,6 +15,7 @@ func NewConfig() *Config {
 		panic("KEY is not set")
 	}
 	return &Config{
-		Key: key,
+		Key:        key,
+		PrimaryUrl: "https://api.jsonbin.io/v3/b",
 	}
 }
