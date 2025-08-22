@@ -11,6 +11,12 @@ import (
 	"net/url"
 )
 
+var ErrNotFoundBin = errors.New("BIN_WAS_NOT_FOUND")
+var ErrWhileCreateBin = errors.New("ERROR_WHILE_CREATE_BIN")
+var ErrWhileGetBin = errors.New("ERROR_WHILE_GET_BIN")
+var ErrWhileUpdateBin = errors.New("ERROR_WHILE_UPDATE_BIN")
+var ErrWhileDeleteBin = errors.New("ERROR_WHILE_DELETE_BIN")
+
 func CreateBin(config *config.Config, name *string, binData *bins.RecordData) (*bins.Bin, error) {
 	body, _ := json.Marshal(map[string]string{
 		"text": binData.Text,
@@ -31,7 +37,7 @@ func CreateBin(config *config.Config, name *string, binData *bins.RecordData) (*
 	defer response.Body.Close()
 
 	if response.StatusCode != 200 {
-		return nil, errors.New("ERROR_WHILE_CREATE_BIN")
+		return nil, ErrWhileCreateBin
 	}
 
 	responseBody, err := io.ReadAll(response.Body)
@@ -64,8 +70,12 @@ func GetBin(config *config.Config, id *string) (*bins.RecordData, error) {
 	}
 	defer response.Body.Close()
 
+	if response.StatusCode == 404 {
+		return nil, ErrNotFoundBin
+	}
+
 	if response.StatusCode != 200 {
-		return nil, errors.New("ERROR_WHILE_GET_BIN")
+		return nil, ErrWhileGetBin
 	}
 
 	responseBody, err := io.ReadAll(response.Body)
@@ -103,7 +113,7 @@ func UpdateBin(config *config.Config, id *string, binData *bins.RecordData) (*st
 	defer response.Body.Close()
 
 	if response.StatusCode != 200 {
-		return nil, nil, errors.New("ERROR_WHILE_UPDATE_BIN")
+		return nil, nil, ErrWhileUpdateBin
 	}
 	return id, binData, nil
 }
@@ -128,7 +138,7 @@ func DeleteBin(config *config.Config, id *string) (string, error) {
 	}
 	defer response.Body.Close()
 	if response.StatusCode != 200 {
-		return "", errors.New("ERROR_WHILE_DELETE_BIN")
+		return "", ErrWhileDeleteBin
 	}
 
 	responseBody, err := io.ReadAll(response.Body)
